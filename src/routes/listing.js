@@ -22,10 +22,11 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       Subcategory
     } = req.body;
 
-    // Get image URL from uploaded file
+
+    // Get image URL from uploaded file (Cloudinary)
     let ImageURL = null;
     if (req.file) {
-      ImageURL = `/uploads/${req.file.filename}`;
+      ImageURL = req.file.path; // Cloudinary URL
     }
 
     const newListing = await Listing.create({

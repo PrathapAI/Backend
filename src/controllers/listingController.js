@@ -6,7 +6,6 @@ import Location from '../models/Location.js';
 
 export const getListings = async (req, res) => {
   try {
-    const ListingImage = (await import('../models/ListingImage.js')).default;
     const listings = await Listing.findAll({
       attributes: [
         'ListingID', 'Title', 'Description', 'ExpectedPrice', 'IsPriceNegotiable', 'IsActive', 'IsSeller', 'IsIndividual', 'CreateDate', 'LocationID', 'CategoryID', 'ImageURL'
@@ -48,7 +47,6 @@ export const getListings = async (req, res) => {
 
 export const getListing = async (req, res) => {
   try {
-    const ListingImage = (await import('../models/ListingImage.js')).default;
     const listing = await Listing.findByPk(req.params.id, {
       attributes: [
         'ListingID', 'Title', 'Description', 'ExpectedPrice', 'IsPriceNegotiable', 'IsActive', 'IsSeller', 'IsIndividual', 'CreateDate', 'LocationID', 'ImageURL'
@@ -125,7 +123,7 @@ export const createListing = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const imageRecords = req.files.map((file, idx) => ({
         ListingID: newListing.ListingID,
-        ImageURL: `/uploads/${file.filename}`,
+        ImageURL: file.path, // Cloudinary URL
         Ordinal: idx + 1
       }));
       await ListingImage.bulkCreate(imageRecords);
@@ -158,7 +156,6 @@ export const deleteListing = async (req, res) => {
 export const getUserListings = async (req, res) => {
   try {
     const { userId } = req.params;
-    const ListingImage = (await import('../models/ListingImage.js')).default;
     const listings = await Listing.findAll({
       where: { UserID: userId },
       attributes: [
