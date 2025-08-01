@@ -9,10 +9,31 @@ import {
   deleteListing,
   getUserListings
 } from '../controllers/listingController.js';
+import crypto from 'crypto';
 import upload from '../middleware/upload.js';
 import auth from '../middleware/auth.js';
 
+
 const router = express.Router();
+
+// Cloudinary signature endpoint for direct upload
+router.get('/cloudinary/signature', (req, res) => {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const cloudinaryApiSecret = process.env.CLOUDINARY_API_SECRET;
+  const cloudinaryApiKey = process.env.CLOUDINARY_API_KEY;
+  const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const folder = 'classified_uploads';
+  // Build signature string
+  const signatureString = `folder=${folder}&timestamp=${timestamp}${cloudinaryApiSecret}`;
+  const signature = crypto.createHash('sha1').update(signatureString).digest('hex');
+  res.json({
+    signature,
+    timestamp,
+    apiKey: cloudinaryApiKey,
+    uploadUrl: `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/auto/upload`,
+    folder
+  });
+});
 
 router.get('/', getListings);
 router.get('/:id', getListing);

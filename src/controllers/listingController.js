@@ -3,6 +3,7 @@ import ListingImage from '../models/ListingImage.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import Location from '../models/Location.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 export const getListings = async (req, res) => {
   try {
@@ -101,10 +102,11 @@ export const createListing = async (req, res) => {
       IsSeller,
       IsIndividual,
       LocationID,
-      SubCategoryID
+      SubCategoryID,
+      ImageURLs // new: array of Cloudinary URLs
     } = req.body;
 
-    // Create the listing record
+    // Create the listing record first
     const newListing = await Listing.create({
       UserID,
       CategoryID,
@@ -119,13 +121,36 @@ export const createListing = async (req, res) => {
       SubCategoryID
     });
 
-    // Save image records associated with the listing
-    if (req.files && req.files.length > 0) {
-      const imageRecords = req.files.map((file, idx) => ({
+    // If ImageURLs is provided (from frontend direct upload), save them
+    if (Array.isArray(ImageURLs) && ImageURLs.length > 0) {
+      const imageRecords = ImageURLs.map((url, idx) => ({
         ListingID: newListing.ListingID,
-        ImageURL: file.path, // Cloudinary URL
+        ImageURL: url,
         Ordinal: idx + 1
       }));
+      await ListingImage.bulkCreate(imageRecords);
+    }
+    // (Optional) fallback: handle req.files for legacy support
+    else if (req.files && req.files.length > 0) {
+      const imageRecords = [];
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: 'classified_uploads' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(file.buffer);
+        });
+        imageRecords.push({
+          ListingID: newListing.ListingID,
+          ImageURL: result.secure_url,
+          Ordinal: i + 1
+        });
+      }
       await ListingImage.bulkCreate(imageRecords);
     }
 

@@ -14,6 +14,8 @@ import reviewRoutes from './routes/reviews.js';
 import favoriteRoutes from './routes/favorites.js';
 import messageRoutes from './routes/messages.js';
 import './models/associations.js';
+import cloudinaryRoutes from './routes/cloudinary.js';
+import subcategoryCrudRoutes from './routes/subcategory.js';
 
 dotenv.config();
 
@@ -31,13 +33,14 @@ app.use('/crud/users', userCrudRoutes);
 app.use('/crud/listings', listingCrudRoutes);
 app.use('/crud/locations', locationCrudRoutes);
 app.use('/crud/categories', categoryCrudRoutes);
-import subcategoryCrudRoutes from './routes/subcategory.js';
+
 app.use('/crud/subcategories', subcategoryCrudRoutes);
 app.use('/api/admins', adminRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/favorites', favoriteRoutes);
 app.use('/messages', messageRoutes);
 app.use('/listings', listingsRouter);
+app.use('/api/cloudinary', cloudinaryRoutes);
 
 
 // Sync Sequelize models and start the server
