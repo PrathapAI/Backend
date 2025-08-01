@@ -26,6 +26,16 @@ router.get('/cloudinary/signature', (req, res) => {
   // Build signature string
   const signatureString = `folder=${folder}&timestamp=${timestamp}${cloudinaryApiSecret}`;
   const signature = crypto.createHash('sha1').update(signatureString).digest('hex');
+   // Log values for debugging
+  console.log('Cloudinary Signature Debug:');
+  console.log('apiKey:', cloudinaryApiKey);
+  console.log('apiSecret:', cloudinaryApiSecret);
+  console.log('cloudName:', cloudinaryCloudName);
+  console.log('timestamp:', timestamp);
+  console.log('folder:', folder);
+  console.log('signatureString:', signatureString);
+  console.log('signature:', signature);
+  
   res.json({
     signature,
     timestamp,
