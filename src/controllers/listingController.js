@@ -63,7 +63,7 @@ export const getListing = async (req, res) => {
         },
         {
           model: Location,
-          attributes: ['village']
+          attributes: ['state', 'district', 'mandal', 'village']
         },
         {
           model: (await import('../models/SubCategory.js')).default,

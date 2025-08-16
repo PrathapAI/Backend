@@ -44,12 +44,20 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ where: { Email: email } });
+    const { email, phone, password } = req.body;
+    if ((!email && !phone) || !password) {
+      return res.status(400).json({ error: 'Phone number or email and password are required' });
+    }
+    let user;
+    if (phone) {
+      user = await User.findOne({ where: { PhoneNumber: phone } });
+    } else if (email) {
+      user = await User.findOne({ where: { Email: email } });
+    }
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
     const valid = await bcrypt.compare(password, user.Password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
-    const token = jwt.sign({ id: user.UserID, email: user.Email }, process.env.JWT_SECRET || 'secret', { expiresIn: '15m' });
+    const token = jwt.sign({ id: user.UserID, email: user.Email, phone: user.PhoneNumber }, process.env.JWT_SECRET || 'secret', { expiresIn: '15m' });
     res.json({ token, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
