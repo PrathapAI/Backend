@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize';
 
-const sequelize = process.env.DATABASE_URL
+const sequelize = process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== ''
   ? new Sequelize(process.env.DATABASE_URL, {
       dialect: 'postgres',
       logging: console.log, // Enable logging to see SQL queries and errors
