@@ -9,12 +9,12 @@ export const getListings = async (req, res) => {
   try {
     const listings = await Listing.findAll({
       attributes: [
-        'ListingID', 'Title', 'Description', 'ExpectedPrice', 'IsPriceNegotiable', 'IsActive', 'IsSeller', 'IsIndividual', 'CreateDate', 'LocationID', 'CategoryID', 'ImageURL'
+        'ListingID', 'Title', 'Description', 'ExpectedPrice', 'IsPriceNegotiable', 'IsActive', 'IsSeller', 'IsIndividual', 'CreateDate', 'LocationID', 'CategoryID', 'ImageURL', 'Listing_Type', 'CampaignStartDate', 'CampaignEndDate'
       ],
       include: [
         {
           model: User,
-          attributes: [['Username', 'name'], 'Email', ['PhoneNumber', 'phone']]
+          attributes: ['UserID', ['Username', 'name'], 'Email', ['PhoneNumber', 'phone']]
         },
         {
           model: Category,
@@ -30,6 +30,7 @@ export const getListings = async (req, res) => {
         },
         {
           model: ListingImage,
+          as: 'ListingImages',
           attributes: ['ImageID', 'ImageURL', 'Ordinal']
         }
       ]
@@ -48,14 +49,15 @@ export const getListings = async (req, res) => {
 
 export const getListing = async (req, res) => {
   try {
-    const listing = await Listing.findByPk(req.params.id, {
+    const listing = await Listing.findOne({
+      where: { ListingID: req.params.id },
       attributes: [
-        'ListingID', 'Title', 'Description', 'ExpectedPrice', 'IsPriceNegotiable', 'IsActive', 'IsSeller', 'IsIndividual', 'CreateDate', 'LocationID', 'ImageURL'
+        'ListingID', 'Title', 'Description', 'ExpectedPrice', 'IsPriceNegotiable', 'IsActive', 'IsSeller', 'IsIndividual', 'CreateDate', 'LocationID', 'CategoryID', 'ImageURL', 'Listing_Type', 'CampaignStartDate', 'CampaignEndDate'
       ],
       include: [
         {
           model: User,
-          attributes: [['Username', 'name'], 'Email', ['PhoneNumber', 'phone']]
+          attributes: ['UserID', ['Username', 'name'], 'Email', ['PhoneNumber', 'phone']]
         },
         {
           model: Category,
@@ -71,6 +73,7 @@ export const getListing = async (req, res) => {
         },
         {
           model: ListingImage,
+          as: 'ListingImages',
           attributes: ['ImageID', 'ImageURL', 'Ordinal']
         }
       ]
@@ -91,9 +94,21 @@ export const getListing = async (req, res) => {
 
 export const createListing = async (req, res) => {
   try {
+    console.log('\n========== CREATE LISTING CALLED ==========');
+    console.log('Full Request body:', JSON.stringify(req.body, null, 2));
+    console.log('req.body.ImageURLs directly:', req.body.ImageURLs);
+    console.log('Type of req.body.ImageURLs:', typeof req.body.ImageURLs);
+    console.log('Is Array:', Array.isArray(req.body.ImageURLs));
+    if (Array.isArray(req.body.ImageURLs)) {
+      console.log('Array length:', req.body.ImageURLs.length);
+      console.log('Array contents:', req.body.ImageURLs);
+    }
+    
     const {
       UserID,
       CategoryID,
+      SubCategoryID,
+      Listing_Type,
       Title,
       Description,
       ExpectedPrice,
@@ -102,9 +117,13 @@ export const createListing = async (req, res) => {
       IsSeller,
       IsIndividual,
       LocationID,
-      SubCategoryID,
+      CampaignStartDate,
+      CampaignEndDate,
       ImageURLs // new: array of Cloudinary URLs
     } = req.body;
+    console.log('Extracted ImageURLs:', ImageURLs);
+    console.log('ImageURLs type:', typeof ImageURLs);
+    console.log('ImageURLs isArray:', Array.isArray(ImageURLs));
 
     // Create the listing record first
     const newListing = await Listing.create({
@@ -118,20 +137,63 @@ export const createListing = async (req, res) => {
       IsSeller,
       IsIndividual,
       LocationID,
-      SubCategoryID
+      SubCategoryID,
+      Listing_Type,
+      CampaignStartDate: CampaignStartDate || null,
+      CampaignEndDate: CampaignEndDate || null
     });
 
-    // If ImageURLs is provided (from frontend direct upload), save them
-    if (Array.isArray(ImageURLs) && ImageURLs.length > 0) {
-      const imageRecords = ImageURLs.map((url, idx) => ({
-        ListingID: newListing.ListingID,
-        ImageURL: url,
-        Ordinal: idx + 1
-      }));
-      await ListingImage.bulkCreate(imageRecords);
+    // Accept both single image and multiple images
+    let normalizedImageURLs = [];
+    console.log('\n--- NORMALIZING IMAGE URLs ---');
+    console.log('Raw ImageURLs:', ImageURLs);
+    
+    if (Array.isArray(ImageURLs)) {
+      console.log('ImageURLs is an array with length:', ImageURLs.length);
+      normalizedImageURLs = ImageURLs.filter(url => typeof url === 'string' && url.trim() !== '');
+      console.log('After filtering, normalizedImageURLs length:', normalizedImageURLs.length);
+    } else if (typeof ImageURLs === 'string' && ImageURLs.trim() !== '') {
+      console.log('ImageURLs is a non-empty string');
+      normalizedImageURLs = [ImageURLs];
+    } else {
+      console.log('ImageURLs is undefined, null, or empty');
     }
-    // (Optional) fallback: handle req.files for legacy support
-    else if (req.files && req.files.length > 0) {
+    
+    console.log('Final normalizedImageURLs:', normalizedImageURLs);
+    console.log('Number of images to insert:', normalizedImageURLs.length);
+    
+    if (normalizedImageURLs.length === 0) {
+      console.warn('⚠️ NO VALID IMAGE URLs PROVIDED FOR LISTING:', newListing.ListingID);
+    } else {
+      console.log(`\n--- INSERTING ${normalizedImageURLs.length} IMAGES INTO ListingImages TABLE ---`);
+    }
+    
+    // Insert each image into ListingImages table
+    try {
+      for (let idx = 0; idx < normalizedImageURLs.length; idx++) {
+        const url = normalizedImageURLs[idx];
+        console.log(`\n[Image ${idx + 1}/${normalizedImageURLs.length}]`);
+        console.log('  ListingID:', newListing.ListingID);
+        console.log('  ImageURL:', url);
+        console.log('  Ordinal:', idx + 1);
+        
+        const imageRecord = await ListingImage.create({
+          ListingID: newListing.ListingID,
+          ImageURL: url,
+          Ordinal: idx + 1
+        });
+        
+        console.log('  ✅ Successfully inserted:', imageRecord.toJSON());
+      }
+      console.log(`\n✅ TOTAL IMAGES INSERTED: ${normalizedImageURLs.length}`);
+    } catch (err) {
+      console.error('\n❌ ERROR INSERTING ListingImages:');
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
+      console.error('Full error:', err);
+    }
+    // Fallback: handle req.files for legacy support
+    if (req.files && req.files.length > 0) {
       const imageRecords = [];
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
@@ -154,8 +216,44 @@ export const createListing = async (req, res) => {
       await ListingImage.bulkCreate(imageRecords);
     }
 
-    res.status(201).json(newListing);
+    // Fetch the listing with all associations after creation
+    const listingWithImages = await Listing.findOne({
+      where: { ListingID: newListing.ListingID },
+      include: [
+        {
+          model: User,
+          attributes: [['Username', 'name'], 'Email', ['PhoneNumber', 'phone']]
+        },
+        {
+          model: Category,
+          attributes: ['CategoryID', ['CategoryName', 'CategoryName']]
+        },
+        {
+          model: Location,
+          attributes: ['state', 'district', 'mandal', 'village']
+        },
+        {
+          model: (await import('../models/SubCategory.js')).default,
+          attributes: ['SubCategoryID', 'SubCategoryName']
+        },
+        {
+          model: ListingImage,
+          as: 'ListingImages',
+          attributes: ['ImageID', 'ImageURL', 'Ordinal']
+        }
+      ]
+    });
+    // Add computed availability field (yes/no) based on IsActive
+    if (listingWithImages) {
+      const obj = listingWithImages.toJSON();
+      obj.availability = obj.IsActive ? 'yes' : 'no';
+      res.status(201).json(obj);
+    } else {
+      // This case might not be hit if findOne throws an error for not found
+      res.status(404).json({ message: 'Listing not found after creation' });
+    }
   } catch (err) {
+    console.error('Error in createListing:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -184,7 +282,7 @@ export const getUserListings = async (req, res) => {
     const listings = await Listing.findAll({
       where: { UserID: userId },
       attributes: [
-        'ListingID', 'Title', 'Description', 'ExpectedPrice', 'IsPriceNegotiable', 'IsActive', 'IsSeller', 'IsIndividual', 'CreateDate', 'LocationID', 'CategoryID', 'ImageURL'
+        'ListingID', 'Title', 'Description', 'ExpectedPrice', 'IsPriceNegotiable', 'IsActive', 'IsSeller', 'IsIndividual', 'CreateDate', 'LocationID', 'CategoryID', 'ImageURL', 'Listing_Type', 'CampaignStartDate', 'CampaignEndDate'
       ],
       include: [
         {
@@ -205,6 +303,7 @@ export const getUserListings = async (req, res) => {
         },
         {
           model: ListingImage,
+          as: 'ListingImages',
           attributes: ['ImageID', 'ImageURL', 'Ordinal']
         }
       ]

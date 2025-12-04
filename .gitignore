@@ -21,3 +21,7 @@ build/
 
 # Misc
 coverage/
+
+database-migration.sql
+
+.md

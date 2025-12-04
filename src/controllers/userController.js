@@ -39,8 +39,26 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const updated = await User.update(req.body, { where: { UserID: req.params.id }, returning: true });
-    res.json(updated[1][0]);
+    const { password, ...otherFields } = req.body;
+    let updateData = otherFields;
+    
+    // If password is being updated, hash it first
+    if (password) {
+      const bcrypt = (await import('bcryptjs')).default;
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.Password = hashedPassword;
+    }
+    
+    const [updated] = await User.update(updateData, { 
+      where: { UserID: req.params.id }
+    });
+    
+    if (updated) {
+      const updatedUser = await User.findByPk(req.params.id);
+      res.json(updatedUser);
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

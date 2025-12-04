@@ -13,6 +13,8 @@ import adminRoutes from './routes/admins.js';
 import reviewRoutes from './routes/reviews.js';
 import favoriteRoutes from './routes/favorites.js';
 import messageRoutes from './routes/messages.js';
+import searchHistoryRoutes from './routes/searchHistory.js';
+import notificationRoutes from './routes/notifications.js';
 import './models/associations.js';
 import cloudinaryRoutes from './routes/cloudinary.js';
 import subcategoryCrudRoutes from './routes/subcategory.js';
@@ -22,34 +24,36 @@ dotenv.config();
 const app = express();
 
 // Middleware
+// Force reload - Age/Gender fix applied
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 // Routes
-
 app.use('/auth', authRoutes);
 app.use('/crud/users', userCrudRoutes);
 app.use('/crud/listings', listingCrudRoutes);
 app.use('/crud/locations', locationCrudRoutes);
 app.use('/crud/categories', categoryCrudRoutes);
-
 app.use('/crud/subcategories', subcategoryCrudRoutes);
 app.use('/api/admins', adminRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/favorites', favoriteRoutes);
 app.use('/messages', messageRoutes);
+app.use('/search-history', searchHistoryRoutes);
+app.use('/notifications', notificationRoutes);
 app.use('/listings', listingsRouter);
 app.use('/api/cloudinary', cloudinaryRoutes);
 
 
 // Sync Sequelize models and start the server
 const PORT = process.env.PORT || 5000;
+console.log('🔄 Starting server with Age/Gender fix...');
 sequelize.sync({ alter: true })
   .then(() => {
-    console.log('✅ Connected to PostgreSQL & models synced');
+    console.log('✅ Connected to PostgreSQL & models synced - Age/Gender fix active');
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on http://localhost:${PORT}`);
+      console.log(`🚀 Server is running on http://localhost:${PORT} - Age/Gender fix active`);
     });
   })
   .catch((err) => {

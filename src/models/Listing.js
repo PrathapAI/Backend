@@ -35,8 +35,23 @@ const Listing = sequelize.define('Listing', {
     type: DataTypes.STRING(255),
     allowNull: false
   },
+  Listing_Type: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  CampaignStartDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  CampaignEndDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   Description: DataTypes.TEXT,
-  ExpectedPrice: DataTypes.DECIMAL(12,2),
+  ExpectedPrice: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true
+  },
   IsPriceNegotiable: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
@@ -70,15 +85,5 @@ const Listing = sequelize.define('Listing', {
   tableName: 'Listings',
   timestamps: false
 });
-
-
-import SubCategory from './SubCategory.js';
-import ListingImage from './ListingImage.js';
-
-Listing.belongsTo(SubCategory, { foreignKey: 'SubCategoryID' });
-SubCategory.hasMany(Listing, { foreignKey: 'SubCategoryID' });
-
-Listing.hasMany(ListingImage, { foreignKey: 'ListingID', as: 'ListingImages' });
-ListingImage.belongsTo(Listing, { foreignKey: 'ListingID' });
 
 export default Listing;

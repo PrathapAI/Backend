@@ -36,6 +36,19 @@ const User = sequelize.define('User', {
   Address: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  Role: {
+    type: DataTypes.STRING(20),
+    defaultValue: 'user',
+    allowNull: false
+  },
+  Age: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  Gender: {
+    type: DataTypes.STRING(10),
+    allowNull: true
   }
 }, {
   tableName: 'Users',

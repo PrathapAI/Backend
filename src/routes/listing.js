@@ -2,53 +2,11 @@ import express from 'express';
 import Listing from '../models/Listing.js';
 import upload from '../middleware/upload.js'; // Multer config
 import auth from '../middleware/auth.js';
+import { createListing } from '../controllers/listingController.js';
 const router = express.Router();
 
-// Create (Sequelize + Multer)
-router.post('/', auth, upload.single('image'), async (req, res) => {
-  try {
-    // Build the listing data from req.body
-    const {
-      UserID,
-      CategoryID,
-      Title,
-      Description,
-      ExpectedPrice,
-      IsPriceNegotiable,
-      IsActive,
-      IsSeller,
-      IsIndividual,
-      LocationID,
-      Subcategory
-    } = req.body;
-
-
-    // Get image URL from uploaded file (Cloudinary)
-    let ImageURL = null;
-    if (req.file) {
-      ImageURL = req.file.path; // Cloudinary URL
-    }
-
-    const newListing = await Listing.create({
-      UserID,
-      CategoryID,
-      Title,
-      Description,
-      ExpectedPrice,
-      IsPriceNegotiable,
-      IsActive,
-      IsSeller,
-      IsIndividual,
-      LocationID,
-      Subcategory,
-      ImageURL
-    });
-
-    res.status(201).json(newListing);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+// Create - Use the controller that handles ImageURLs array and ListingImages table
+router.post('/', auth, createListing);
 
 // Read all
 router.get('/', async (req, res) => {

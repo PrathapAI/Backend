@@ -1,10 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import listingRoutes from './routes/listings.js';
+import authRoutes from './routes/auth.js';
 
-
-
-const authRoutes = require('./routes/auth');
 const app = express();
 const PORT = 5000;
 
