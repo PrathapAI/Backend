@@ -1,14 +1,25 @@
 import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
 
-// Create Gmail transporter
+// Check which email service to use
+const useSendGrid = !!process.env.SENDGRID_API_KEY;
+
+if (useSendGrid) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  console.log('[EMAIL] SendGrid configured');
+} else {
+  console.log('[EMAIL] Gmail SMTP configured for:', process.env.EMAIL_USER);
+}
+
+// Create Gmail transporter (fallback for local development)
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
-  secure: true, // Use SSL
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.replace(/\s/g, '') : ''
@@ -17,8 +28,6 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false
   }
 });
-
-console.log('[EMAIL] Gmail SMTP configured for:', process.env.EMAIL_USER);
 
 // Generate 6-digit OTP
 export const generateOTP = () => {
@@ -77,18 +86,35 @@ export const sendOTPEmail = async (email, otp, purpose = 'verification') => {
       </html>
     `;
 
-    const mailOptions = {
-      from: `"Campaign Star" <${process.env.EMAIL_USER || 'your-email@gmail.com'}>`,
-      to: email,
-      subject: subject,
-      html: htmlContent
-    };
+    // Use SendGrid if API key is configured, otherwise use Gmail SMTP
+    if (useSendGrid) {
+      const msg = {
+        to: email,
+        from: process.env.SENDGRID_FROM_EMAIL || 'noreply@campaignstar.com',
+        subject: subject,
+        html: htmlContent
+      };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('[EMAIL] OTP sent successfully to:', email);
-    console.log('[EMAIL] Message ID:', info.messageId);
-    
-    return { success: true, messageId: info.messageId };
+      const response = await sgMail.send(msg);
+      console.log('[EMAIL] OTP sent via SendGrid to:', email);
+      console.log('[EMAIL] SendGrid response code:', response[0].statusCode);
+      
+      return { success: true, provider: 'sendgrid' };
+    } else {
+      // Fallback to Gmail SMTP
+      const mailOptions = {
+        from: `"Campaign Star" <${process.env.EMAIL_USER || 'your-email@gmail.com'}>`,
+        to: email,
+        subject: subject,
+        html: htmlContent
+      };
+
+      const info = await transporter.sendMail(mailOptions);
+      console.log('[EMAIL] OTP sent via Gmail SMTP to:', email);
+      console.log('[EMAIL] Message ID:', info.messageId);
+      
+      return { success: true, messageId: info.messageId, provider: 'gmail' };
+    }
   } catch (error) {
     console.error('[EMAIL] Failed to send OTP:', error);
     throw error;
