@@ -65,11 +65,20 @@ router.post('/send-reset-otp', async (req, res) => {
       console.error(`[SEND RESET OTP] User not found for email: ${email}`);
       return res.status(404).json({ error: 'User not found' });
     }
+    
     // Generate OTP
     const otp = generateOTP();
+    
     // Store OTP in memory (for demo; use Redis or DB in production)
     if (!global.otpStore) global.otpStore = {};
     global.otpStore[email] = { otp, expires: Date.now() + 5 * 60 * 1000 };
+    
+    // Check if email is configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.warn('[SEND RESET OTP] Email not configured - using dev mode');
+      console.log(`[SEND RESET OTP] DEV MODE - OTP for ${email}: ${otp}`);
+      return res.json({ success: true, message: 'OTP generated (email not configured)', otp });
+    }
     
     // Send OTP via email
     await sendOTPEmail(email, otp, 'reset');
@@ -91,6 +100,31 @@ router.post('/generate-otp', async (req, res) => {
   }
 
   try {
+    // Check if email is configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.warn('[GENERATE OTP] Email not configured - using dev mode');
+      
+      // Generate OTP for dev mode
+      const otp = generateOTP();
+      
+      // Store OTP in global store with 5 minutes expiry
+      if (!global.otpVerificationStore) {
+        global.otpVerificationStore = {};
+      }
+      
+      global.otpVerificationStore[email] = {
+        otp,
+        expires: Date.now() + 5 * 60 * 1000 // 5 minutes
+      };
+
+      console.log(`[GENERATE OTP] DEV MODE - OTP for ${email}: ${otp}`);
+      
+      return res.json({ 
+        message: 'OTP generated (email not configured)',
+        otp // In dev mode, return OTP directly
+      });
+    }
+
     // Generate OTP
     const otp = generateOTP();
     
