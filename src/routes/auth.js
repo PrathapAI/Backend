@@ -8,7 +8,15 @@ import { generateOTP, sendOTPEmail } from '../config/email.js';
 import { register, login } from '../controllers/authController.js';
 const router = express.Router();
 
-
+// Test endpoint
+router.get('/test', (req, res) => {
+  console.log('[AUTH TEST] Test endpoint hit');
+  res.json({ 
+    message: 'Auth routes working',
+    timestamp: new Date().toISOString(),
+    emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD)
+  });
+});
 
 
 // POST /auth/reset-password
@@ -93,13 +101,17 @@ router.post('/send-reset-otp', async (req, res) => {
 
 // POST /auth/generate-otp - Generate OTP for email verification
 router.post('/generate-otp', async (req, res) => {
+  console.log('[GENERATE OTP] Request received:', req.body);
   const { email } = req.body;
   
   if (!email) {
+    console.error('[GENERATE OTP] No email provided');
     return res.status(400).json({ error: 'Email is required' });
   }
 
   try {
+    console.log('[GENERATE OTP] Processing OTP for:', email);
+    
     // Check if email is configured
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
       console.warn('[GENERATE OTP] Email not configured - using dev mode');
@@ -139,6 +151,7 @@ router.post('/generate-otp', async (req, res) => {
     };
 
     // Send OTP via email
+    console.log('[GENERATE OTP] Attempting to send email to:', email);
     await sendOTPEmail(email, otp, 'verification');
 
     console.log(`[GENERATE OTP] OTP sent to ${email}: ${otp}`);
@@ -149,8 +162,12 @@ router.post('/generate-otp', async (req, res) => {
       otp // Remove this in production
     });
   } catch (err) {
-    console.error('[GENERATE OTP] Error:', err);
-    res.status(500).json({ error: 'Failed to send OTP email' });
+    console.error('[GENERATE OTP] Error occurred:', err);
+    console.error('[GENERATE OTP] Error stack:', err.stack);
+    res.status(500).json({ 
+      error: 'Failed to send OTP email',
+      details: err.message 
+    });
   }
 });
 
