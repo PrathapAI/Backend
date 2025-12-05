@@ -55,19 +55,47 @@ app.use('/notifications', notificationRoutes);
 app.use('/listings', listingsRouter);
 app.use('/api/cloudinary', cloudinaryRoutes);
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'Server is running', 
+    timestamp: new Date().toISOString(),
+    env: {
+      hasDB: !!process.env.DATABASE_URL,
+      hasJWT: !!process.env.JWT_SECRET,
+      hasSendGrid: !!process.env.SENDGRID_API_KEY,
+      hasCloudinary: !!process.env.CLOUDINARY_CLOUD_NAME
+    }
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error', 
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 // Sync Sequelize models and start the server
 const PORT = process.env.PORT || 5000;
 console.log('🔄 Starting server with Age/Gender fix...');
+
+// Start server even if DB fails
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT} - Age/Gender fix active`);
+});
+
+// Try to connect to database
 sequelize.sync({ alter: true })
   .then(() => {
     console.log('✅ Connected to PostgreSQL & models synced - Age/Gender fix active');
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on http://localhost:${PORT} - Age/Gender fix active`);
-    });
   })
   .catch((err) => {
     console.error('❌ PostgreSQL connection failed:', err.message);
+    console.error('Server will run without database connection');
   });
 
 process.on('SIGINT', async () => {
