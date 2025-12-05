@@ -33,7 +33,7 @@ if (process.env.DATABASE_URL) {
     process.env.POSTGRES_USER || 'postgress_r037_user',
     process.env.POSTGRES_PASSWORD || 'ChjBYwsxjbQDwQiRLpeQtHhGHR5vpJbq',
     {
-      host: process.env.POSTGRES_HOST || 'dpg-d22v5i6mcj7s73d1090g-a.oregon-postgres.render.com',
+      host: process.env.POSTGRES_HOST || 'dpg-d22v5i6mcj7s73d1090g-a',
       dialect: 'postgres',
       port: process.env.POSTGRES_PORT || 5432,
       logging: console.log,
