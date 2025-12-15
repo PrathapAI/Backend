@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "bab1be55-6e28-45d5-834a-8296a84c239c"
+      }
+    },
+    "android": {
+      "package": "com.campaignstar"
+    }
+  }
+}
