@@ -6,7 +6,9 @@
       }
     },
     "android": {
-      "package": "com.campaignstar"
+      "package": "com.campaignstar",
+      "targetSdkVersion": 35,
+      "compileSdkVersion": 35
     }
   }
 }
