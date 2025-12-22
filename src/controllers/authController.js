@@ -80,6 +80,23 @@ export const register = async (req, res) => {
     console.log('  email:', email);
     console.log('  age:', age, 'gender:', gender);
     
+    // Validate strong password
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+    if (!/[A-Z]/.test(password)) {
+      return res.status(400).json({ error: 'Password must contain at least one uppercase letter' });
+    }
+    if (!/[a-z]/.test(password)) {
+      return res.status(400).json({ error: 'Password must contain at least one lowercase letter' });
+    }
+    if (!/[0-9]/.test(password)) {
+      return res.status(400).json({ error: 'Password must contain at least one number' });
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      return res.status(400).json({ error: 'Password must contain at least one special character' });
+    }
+    
     // Check if phone number already exists
     const existingPhone = await User.findOne({ where: { PhoneNumber: phone } });
     if (existingPhone) {
@@ -206,7 +223,8 @@ export const login = async (req, res) => {
       id: user.UserID, 
       email: user.Email, 
       phone: user.PhoneNumber,
-      role: user.Role || 'user'
+      role: user.Role || 'user',
+      address: user.Address || null
     };
     
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET || 'secret', { expiresIn: '15m' });

@@ -26,6 +26,10 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "nodemon": "^2.0.22",
+    "typescript": "^5.9.3"
   }
 }

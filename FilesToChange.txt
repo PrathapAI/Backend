@@ -1,0 +1,23 @@
+
+FrontEnd
+
+ .env 
+ vite.config.js
+ 
+ 
+BackEnd
+
+ .env
+ sequelize.js
+ 
+ 
+ CreateListings.jsx
+ 
+ const { data: signData } = await API.get('/api/cloudinary/signature', {
+      headers: { Authorization: `Bearer ${token}` }
+	  
+
+
+try {
+        await API.post('/crud/listings', {
+        UserID: userId,
