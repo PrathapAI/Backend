@@ -35,8 +35,11 @@ const Expert = sequelize.define('Expert', {
   },
   // Expertise areas: Real Estate, Marriage Bureau, Job Assistance
   ExpertiseArea: {
-    type: DataTypes.ENUM('Real Estate', 'Marriage Bureau', 'Job Assistance'),
-    allowNull: false
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      isIn: [['Real Estate', 'Marriage Bureau', 'Job Assistance']]
+    }
   },
   // Location details for expert
   LocationID: {

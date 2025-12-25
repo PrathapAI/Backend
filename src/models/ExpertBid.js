@@ -46,8 +46,11 @@ const ExpertBid = sequelize.define('ExpertBid', {
   },
   // Status tracking
   Status: {
-    type: DataTypes.ENUM('pending', 'accepted', 'rejected', 'withdrawn', 'completed'),
-    defaultValue: 'pending'
+    type: DataTypes.STRING,
+    defaultValue: 'pending',
+    validate: {
+      isIn: [['pending', 'accepted', 'rejected', 'withdrawn', 'completed']]
+    }
   },
   // User who posted the listing can accept/reject
   ReviewedBy: {
