@@ -10,6 +10,8 @@ import Favorite from './Favorite.js';
 import Message from './Message.js';
 import SearchHistory from './SearchHistory.js';
 import Notification from './Notification.js';
+import Expert from './Expert.js';
+import ExpertBid from './ExpertBid.js';
 
 // User - Listing
 User.hasMany(Listing, { foreignKey: 'UserID', sourceKey: 'UserID' });
@@ -68,4 +70,24 @@ SearchHistory.belongsTo(User, { foreignKey: 'UserID', targetKey: 'UserID' });
 // User - Notification
 User.hasMany(Notification, { foreignKey: 'UserID', sourceKey: 'UserID' });
 Notification.belongsTo(User, { foreignKey: 'UserID', targetKey: 'UserID' });
+
+// Expert - Location
+Location.hasMany(Expert, { foreignKey: 'LocationID', sourceKey: 'LocationID' });
+Expert.belongsTo(Location, { foreignKey: 'LocationID', targetKey: 'LocationID' });
+
+// Expert - ExpertBid
+Expert.hasMany(ExpertBid, { foreignKey: 'ExpertID', sourceKey: 'ExpertID' });
+ExpertBid.belongsTo(Expert, { foreignKey: 'ExpertID', targetKey: 'ExpertID' });
+
+// Listing - ExpertBid
+Listing.hasMany(ExpertBid, { foreignKey: 'ListingID', sourceKey: 'ListingID', as: 'ExpertBids' });
+ExpertBid.belongsTo(Listing, { foreignKey: 'ListingID', targetKey: 'ListingID' });
+
+// User - ExpertBid (for reviewing bids)
+User.hasMany(ExpertBid, { foreignKey: 'ReviewedBy', sourceKey: 'UserID', as: 'ReviewedBids' });
+ExpertBid.belongsTo(User, { foreignKey: 'ReviewedBy', targetKey: 'UserID', as: 'Reviewer' });
+
+// Listing - Expert (assigned expert)
+Expert.hasMany(Listing, { foreignKey: 'ExpertID', sourceKey: 'ExpertID', as: 'AssignedListings' });
+Listing.belongsTo(Expert, { foreignKey: 'ExpertID', targetKey: 'ExpertID', as: 'AssignedExpert' });
 

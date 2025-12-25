@@ -3,6 +3,8 @@ import ListingImage from '../models/ListingImage.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import Location from '../models/Location.js';
+import Expert from '../models/Expert.js';
+import Notification from '../models/Notification.js';
 import { v2 as cloudinary } from 'cloudinary';
 
 export const getListings = async (req, res) => {
@@ -247,6 +249,56 @@ export const createListing = async (req, res) => {
     if (listingWithImages) {
       const obj = listingWithImages.toJSON();
       obj.availability = obj.IsActive ? 'yes' : 'no';
+      
+      // Notify experts in the listing's location about the new listing
+      try {
+        // Get category name to match with expert expertise area
+        const category = await Category.findByPk(CategoryID);
+        if (category) {
+          const categoryName = category.CategoryName;
+          
+          // Map category to expertise area
+          const expertiseAreaMap = {
+            'Real Estate': 'Real Estate',
+            'Marriage Bureau': 'Marriage Bureau',
+            'Job Assistance': 'Job Assistance'
+          };
+          
+          const expertiseArea = expertiseAreaMap[categoryName];
+          
+          if (expertiseArea) {
+            // Find experts in the same location with matching expertise
+            const experts = await Expert.findAll({
+              where: {
+                ExpertiseArea: expertiseArea,
+                IsActive: true,
+                EmailNotifications: true
+              }
+            });
+            
+            // Filter experts who service this location
+            const relevantExperts = experts.filter(expert => {
+              const serviceAreas = expert.ServiceAreas || [expert.LocationID];
+              return serviceAreas.includes(LocationID);
+            });
+            
+            console.log(`📧 Notifying ${relevantExperts.length} experts about new listing`);
+            
+            // Create notifications for each expert
+            // Note: Since Notification model is tied to UserID, we'll need to handle this differently
+            // For now, we'll log it. In production, you might want a separate ExpertNotification table
+            for (const expert of relevantExperts) {
+              console.log(`- Expert ${expert.FirstName} ${expert.LastName} (${expert.Email})`);
+              // TODO: Send email notification to expert
+              // You can integrate with SendGrid or your email service here
+            }
+          }
+        }
+      } catch (notifyErr) {
+        console.error('Error notifying experts:', notifyErr);
+        // Don't fail the listing creation if notification fails
+      }
+      
       res.status(201).json(obj);
     } else {
       // This case might not be hit if findOne throws an error for not found

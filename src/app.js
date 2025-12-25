@@ -15,6 +15,7 @@ import favoriteRoutes from './routes/favorites.js';
 import messageRoutes from './routes/messages.js';
 import searchHistoryRoutes from './routes/searchHistory.js';
 import notificationRoutes from './routes/notifications.js';
+import expertRoutes from './routes/expertRoutes.js';
 import './models/associations.js';
 import cloudinaryRoutes from './routes/cloudinary.js';
 import subcategoryCrudRoutes from './routes/subcategory.js';
@@ -53,6 +54,7 @@ app.use('/favorites', favoriteRoutes);
 app.use('/messages', messageRoutes);
 app.use('/search-history', searchHistoryRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/api/experts', expertRoutes);
 app.use('/listings', listingsRouter);
 app.use('/api/cloudinary', cloudinaryRoutes);
 

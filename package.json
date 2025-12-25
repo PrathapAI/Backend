@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test:email": "node src/test/test-email-otp.js"
+    "test:email": "node src/test/test-email-otp.js",
+    "migrate:expert": "node src/run-migration.js"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",

@@ -23,6 +23,18 @@ const Listing = sequelize.define('Listing', {
       key: 'UserID'
     }
   },
+  ExpertID: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Experts',
+      key: 'ExpertID'
+    }
+  },
+  ExpertAssignedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   CategoryID: {
     type: DataTypes.INTEGER,
     allowNull: false,
