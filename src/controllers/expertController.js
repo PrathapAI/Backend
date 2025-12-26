@@ -104,15 +104,22 @@ export const registerExpert = async (req, res) => {
 // Expert Login
 export const loginExpert = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, phoneNumber, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    if ((!email && !phoneNumber) || !password) {
+      return res.status(400).json({ error: 'Email/Phone and password are required' });
     }
 
-    // Find expert by email
+    // Find expert by email or phone number
+    const whereClause = {};
+    if (email) {
+      whereClause.Email = email;
+    } else if (phoneNumber) {
+      whereClause.PhoneNumber = phoneNumber;
+    }
+
     const expert = await Expert.findOne({
-      where: { Email: email },
+      where: whereClause,
       include: [{
         model: Location,
         attributes: ['state', 'district', 'mandal', 'village']
